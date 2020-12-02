@@ -6,7 +6,10 @@ setwd("C:/Users/ch19g17/Documents/AdventOfCode2020")
 
 ## Day 1
 
-## define function findValue. This function sums all the numbers in a given vector, and if they match the value given for the result, the product of the numbers in the vector is returned. 
+## define function findValue. 
+## This function sums all the numbers in a given vector, 
+## and if they match the value given for the result, 
+## the product of the numbers in the vector is returned. 
 findValue<-function(vector,result){
   if (sum(vector)==result){
     return(prod(vector))
@@ -33,7 +36,9 @@ iterate<-function(testVector,index,maxValue){
   return(testVector)
 }
 
-## define function to find the answer, given the data in vector format, and the number of values that must sum to the given result
+## define function to find the answer, 
+## given the data in vector format, 
+## and the number of values that must sum to the given result
 getAnswer<-function(data,noValues,result){
   testVector<-c(1:noValues)
   testProduct<-findValue(data[testVector],result)
