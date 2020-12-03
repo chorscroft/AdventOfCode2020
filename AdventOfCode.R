@@ -82,3 +82,42 @@ day2<-read.table("day2.txt",col.names=c("number","letter","password"))
 answer1<-sum(apply(day2,1,function(x) checkValid(x[1],x[2],x[3])))
 answer2<-sum(apply(day2,1,function(x) checkValid2(x[1],x[2],x[3])))
 
+###################################################################
+
+### Day 3
+day3<-read.table("day3.txt",col.names=c("pattern"),comment.char = "")
+
+# Iterate the column based on the given slope
+nextCol<-function(col,slope,maxCol){
+  col <- col + slope
+  if (col > maxCol){
+    col <- col - maxCol
+  }
+  return(col)
+}
+# Iterate the row based on the given slope
+nextRow<-function(row,slope){
+  row<-row+slope
+}
+# Count the number of trees given the slope and the pattern
+countTrees<-function(slope,pattern){
+  col<-1
+  row<-1
+  countTree<-0
+  maxCol<-nchar(pattern[1])
+  while (row<=nrow(day3)){
+    if(substr(pattern[row],col,col)=="#"){
+      countTree<-countTree+1
+    }
+    col<-nextCol(col,slope[1],maxCol)
+    row<-nextRow(row,slope[2])
+  }
+  return(countTree)
+}
+
+answer1<-countTrees(c(3,1),day3$pattern)
+answer2<-countTrees(c(1,1),day3$pattern)*
+         countTrees(c(3,1),day3$pattern)*
+         countTrees(c(5,1),day3$pattern)*
+         countTrees(c(7,1),day3$pattern)*
+         countTrees(c(1,2),day3$pattern)
