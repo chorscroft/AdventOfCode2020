@@ -120,4 +120,130 @@ answer2<-countTrees(c(1,1),day3$pattern)*
          countTrees(c(3,1),day3$pattern)*
          countTrees(c(5,1),day3$pattern)*
          countTrees(c(7,1),day3$pattern)*
-         countTrees(c(1,2),day3$pattern)
+         countTrees
+
+###################################################################
+
+### Day 4
+
+## Read data into a vector - one entry for each passport
+## Each passport is concatenated into a single string
+day4<-file("day4.txt","r")
+passports<-NULL
+currentPassport<-NULL
+while (TRUE){
+  line = readLines(day4, n = 1)
+  if (length(line) == 0){
+      passports<-c(passports,currentPassport)
+      break
+  } else if (line==""){
+    passports<-c(passports,currentPassport)
+    currentPassport<-NULL
+  } else {
+    blank<-FALSE
+    currentPassport<-paste(currentPassport,line)
+  }
+}
+close(day4)
+
+## Checks that all required fields are present
+checkValid<-function(passport,checks){
+  valid<-sapply(checks,function(x)grepl(x,passport))
+  return(sum(valid)==length(checks))
+}
+
+## Checks that each of the seven fields have valid entries
+checkValid2<-function(passport,checks){
+  if (checkValid(passport,checks)==FALSE){
+    return(FALSE)
+  } else{
+    passport<-unlist(strsplit(passport,c(" ")))
+    #byr
+    byr<-as.numeric(substring(passport[grep("byr",passport)],5))
+    if (byr==""){
+      return(FALSE)
+    }
+    if (is.na(byr)){
+      return(FALSE)
+    } else if (byr<1920 | byr>2002) {
+      return(FALSE)
+    }
+    #iyr
+    iyr<-as.numeric(substring(passport[grep("iyr",passport)],5))
+    if (iyr==""){
+      return(FALSE)
+    }
+    if (is.na(iyr)){
+      return(FALSE)
+    } else if (iyr<2010 | iyr>2020) {
+      return(FALSE)
+    }
+    #eyr
+    eyr<-as.numeric(substring(passport[grep("eyr",passport)],5))
+    if (eyr==""){
+      return(FALSE)
+    }
+    if (is.na(eyr)){
+      return(FALSE)
+    } else if (eyr<2020 | eyr>2030) {
+      return(FALSE)
+    }
+    #hgt
+    hgt<-substring(passport[grep("hgt",passport)],5)
+    if (hgt==""){
+      return(FALSE)
+    }
+    if (substr(hgt,nchar(hgt)-1,nchar(hgt))=="cm"){
+      hgt<-as.numeric(substr(hgt,1,nchar(hgt)-2))
+      if (is.na(hgt)){
+        return(FALSE)
+      } else if (hgt<150 | hgt>193) {
+        return(FALSE)
+      }
+    } else if (substr(hgt,nchar(hgt)-1,nchar(hgt))=="in"){
+      hgt<-as.numeric(substr(hgt,1,nchar(hgt)-2))
+      if (is.na(hgt)){
+        return(FALSE)
+      } else if (hgt<59 | hgt>76) {
+        return(FALSE)
+      }      
+    } else {
+      return(FALSE)
+    }
+    #hcl
+    hcl<-substring(passport[grep("hcl",passport)],5)
+    if (hcl==""){
+      return(FALSE)
+    }
+    if(substr(hcl,1,1)=="#" & nchar(hcl)==7){
+      hcl<-substr(hcl,2,7)
+      if (regexpr('[0-9a-f]{6,6}',hcl) != 1){
+        return(FALSE)
+      }
+    } else {
+      return(FALSE)
+    }
+    #ecl
+    ecl<-substring(passport[grep("ecl",passport)],5)
+    if (ecl==""){
+      return(FALSE)
+    }
+    colours<-c("amb","blu","brn","gry","grn","hzl","oth")
+    if(sum(sapply(colours,function(x)x==ecl)) != 1){
+      return(FALSE)
+    }
+    #pid
+    pid<-substring(passport[grep("pid",passport)],5)
+    if (pid==""){
+      return(FALSE)
+    }    
+    if (regexpr('[0-9]{9,9}',pid) != 1 | nchar(pid) !=9){
+      return(FALSE)
+    }
+    return(TRUE)
+  }
+}
+checks<-c("byr:","iyr:","eyr:","hgt:","hcl:","ecl:","pid:")
+answer1<-sum(sapply(passports,checkValid,checks))
+answer2<-sum(sapply(passports,checkValid2,checks))
+
