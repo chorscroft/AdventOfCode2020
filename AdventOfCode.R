@@ -140,7 +140,6 @@ while (TRUE){
     passports<-c(passports,currentPassport)
     currentPassport<-NULL
   } else {
-    blank<-FALSE
     currentPassport<-paste(currentPassport,line)
   }
 }
