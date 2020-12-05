@@ -246,3 +246,52 @@ checks<-c("byr:","iyr:","eyr:","hgt:","hcl:","ecl:","pid:")
 answer1<-sum(sapply(passports,checkValid,checks))
 answer2<-sum(sapply(passports,checkValid2,checks))
 
+###################################################################
+
+### Day 5
+day5<-read.table("day5.txt",col.names=c("passes"),comment.char = "")
+
+# Returns the seat number
+getSeatNumber<-function(pass){
+  pass<-unlist(strsplit(pass,""))
+  row<-getRow(pass[1:7])
+  col<-getCol(pass[8:10])
+  return(row*8+col)
+}
+# Gets the column number
+getCol<-function(binCol){
+  set<-c(0:7)
+  for (i in binCol){
+    if (i =="L"){
+      set<-set[1:(length(set)/2)]
+    } else {
+      set<-set[(length(set)/2+1):length(set)]
+    }
+  }
+  return(set)
+}
+#Gets the row number
+getRow<-function(binRow){
+  set<-c(0:127)
+  for (i in binRow){
+    if (i =="F"){
+      set<-set[1:(length(set)/2)]
+    } else {
+      set<-set[(length(set)/2+1):length(set)]
+    }
+  }
+  return(set)
+}
+
+# Vector of seat numbers
+seats<-sapply(day5$passes,getSeatNumber)
+answer1<-max(seats)
+
+# Find seat that isn't in the list
+# But both seats either side are in the list
+for(i in 1:answer1){
+  if (sum(i==seats)==0 & sum((i-1)==seats)==1 & sum((i+1)==seats)==1){
+    answer2<-i
+    break
+  }
+}
