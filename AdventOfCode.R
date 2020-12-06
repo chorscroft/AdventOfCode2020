@@ -295,3 +295,41 @@ for(i in 1:answer1){
     break
   }
 }
+
+###################################################################
+
+### Day 6
+
+## Read file into a list variable 
+## One entry into the list per group
+## Each group contains a vector where each item is a person's answers
+
+day6<-file("day6.txt","r")
+questions<-list()
+currentQuestions<-NULL
+while (TRUE){
+  line = readLines(day6, n = 1)
+  if (length(line) == 0){
+    questions[[length(questions)+1]]<-currentQuestions
+    break
+  } else if (line==""){
+    questions[[length(questions)+1]]<-currentQuestions
+    currentQuestions<-NULL
+  } else {
+    currentQuestions<-c(currentQuestions,line)
+  }
+}
+close(day6)
+
+## Count all the different questions answered in a group
+countAnyoneSaidYes<-function(question){
+  return(length(unique(unlist(strsplit(question,"")))))
+}
+## Count each question that was answered by all members of the group
+countEveryoneSaidYes<-function(question){
+  return(sum(table(unlist(strsplit(question,"")))==length(question)))
+}
+
+answer1<-sum(unlist(lapply(questions,countAnyoneSaidYes)))
+answer2<-sum(unlist(lapply(questions,countEveryoneSaidYes)))
+
