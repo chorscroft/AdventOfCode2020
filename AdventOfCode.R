@@ -333,3 +333,90 @@ countEveryoneSaidYes<-function(question){
 answer1<-sum(unlist(lapply(questions,countAnyoneSaidYes)))
 answer2<-sum(unlist(lapply(questions,countEveryoneSaidYes)))
 
+###################################################################
+
+### Day 7
+
+## Create a vector of bag names called bags
+## Create a list of data frames for the bags contained within the bags
+## bags[index] corresponds to contains[[index]]
+## contains[[index]] equals 0 if there are no bags inside
+## Data frames in contains[[index]] have two columns:
+## number of bags and colour of bags
+
+day7<-file("day7.txt","r")
+bags<-NULL
+contains<-list()
+while (TRUE){
+  line = readLines(day7, n = 1)
+  if (length(line) == 0){
+    break
+  } else {
+    bag<-unlist(strsplit(line," "))
+    bags<-c(bags,paste(bag[1],bag[2]))
+    if (bag[5]=="no"){
+      contains[[length(bags)]]<-0
+    } else {
+      number<-NULL
+      colour<-NULL
+      j<-5
+      while (j<length(bag)){
+        number<-c(number,as.numeric(bag[j]))
+        colour<-c(colour,paste(bag[j+1],bag[j+2]))
+        j<-j+4
+      }
+      contains[[length(bags)]]<-data.frame(number,colour)
+    }
+  }
+}
+close(day7)
+
+## Returns a count of the number of bags containing
+## the given bag colour
+countBagsContaining<-function(myBagColour){
+  count<-0
+  for(i in 1:length(bags)){
+    if (bags[i] != myBagColour){
+      if(checkInsideBag(i,myBagColour)==TRUE){
+        count<-count+1
+      }
+    }
+  }
+  return(count)
+}
+
+## Checks to see if the given bag colour is inside
+## the bag at the given index, returns TRUE or FALSE
+checkInsideBag<-function(index,myBagColour){
+  if (is.data.frame(contains[[index]])){
+    for (k in 1:nrow(contains[[index]])){
+      if (contains[[index]]$colour[k]==myBagColour){
+        return(TRUE)
+      } else {
+        if(checkInsideBag(which(bags==contains[[index]]$colour[k],TRUE),myBagColour)==TRUE){
+          return(TRUE)
+        }
+      }
+    }
+  }
+  return(FALSE)
+}
+
+## Finds the number of bags within a bag of the given colour
+numberOfBagsInside<-function(myBagColour){
+  return(bagsInside(which(bags==myBagColour,TRUE)))
+}
+
+## Finds the number of bags within a bag at the given index
+bagsInside<-function(index){
+  count<-0
+  if(is.data.frame(contains[[index]])){
+    for (k in 1:nrow(contains[[index]])){
+      count<-count+contains[[index]]$number[k]+contains[[index]]$number[k]*bagsInside(which(bags==contains[[index]]$colour[k],TRUE))
+    }
+  }
+  return(count)
+}
+
+answer1<-countBagsContaining("shiny gold")
+answer2<-numberOfBagsInside("shiny gold")
