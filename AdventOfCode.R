@@ -420,3 +420,70 @@ bagsInside<-function(index){
 
 answer1<-countBagsContaining("shiny gold")
 answer2<-numberOfBagsInside("shiny gold")
+
+###################################################################
+
+### Day 8
+
+## Read in data
+day8<-read.table("day8.txt",col.names=c("instruction","parameter"))
+
+# Vector to record if a line of code has been visited
+visited<-rep(FALSE,nrow(day8))
+
+# initialise accumulator
+acc<-0
+# start with the code at index 1
+index<-1
+# loop until a line of code has been visited twice
+while(visited[index]==FALSE){
+  visited[index]<-TRUE
+  if(day8$instruction[index]=="nop"){
+    index<-index+1
+  } else if(day8$instruction[index]=="acc"){
+    acc<-acc+day8$parameter[index]
+    index<-index+1
+  } else if(day8$instruction[index]=="jmp"){
+    index<-index+day8$parameter[index]
+  } else {
+    break
+  }
+}
+answer1<-acc
+
+#initialise line to test
+test<-1
+# loop until the code is fixed, testing line by line
+result<-FALSE
+while(result==FALSE){
+  if(day8$instruction[test]=="jmp" | day8$instruction[test]=="nop"){
+    day8new<-day8
+    if(day8new$instruction[test]=="jmp"){
+      day8new$instruction[test]<-"nop"
+    } else if (day8new$instruction[test]=="nop"){
+      day8new$instruction[test]<-"jmp"
+    }
+    visited<-rep(FALSE,nrow(day8new))
+    acc<-0
+    index<-1
+    while(visited[index]==FALSE){
+      visited[index]<-TRUE
+      if(day8new$instruction[index]=="nop"){
+        index<-index+1
+      } else if(day8new$instruction[index]=="acc"){
+        acc<-acc+day8new$parameter[index]
+        index<-index+1
+      } else if(day8new$instruction[index]=="jmp"){
+        index<-index+day8new$parameter[index]
+      } else {
+        break
+      }
+      if (index==(nrow(day8new)+1)){
+        result<-TRUE
+        break
+      }
+    }
+  }
+  test<-test+1
+}
+answer2<-acc
