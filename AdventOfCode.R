@@ -487,3 +487,50 @@ while(result==FALSE){
   test<-test+1
 }
 answer2<-acc
+
+###################################################################
+
+### Day 9
+
+## Read in data
+day9<-read.table("day9.txt",col.names=c("number"))
+
+## finds if the number at the particular index is the sum
+## of two numbers in the previous set (of size preamble)
+isNumberSum<-function(index,preamble){
+  number<-day9$number[index]
+  for (i in 1:(preamble-1)){
+    for (j in (i+1):preamble){
+      print.default(day9$number[index-i]+day9$number[index-j])
+      if ((day9$number[index-i]+day9$number[index-j])==number){
+        return(TRUE)
+      }
+    }
+  }
+  return(FALSE)
+}
+
+## Find the first number which isn't the sum of two
+## of the previous 25 numbers
+preamble<-25
+index<-preamble+1
+while (isNumberSum(index,preamble)==TRUE){
+  index<-index+1
+}
+answer1<-day9$number[index]
+
+## search for a contiguous set of numbers that 
+## sum to answer1
+for(i in 1:nrow(day9)){
+  summing<-day9$number[i]
+  j<-i
+  while(summing<answer1 & j<nrow(day9)){
+    j<-j+1     
+    summing<-summing+day9$number[j]
+  }
+  if (summing==answer1){
+    # Get the sum of the min and max numbers in the contiguous set
+    answer2<-min(day9$number[c(i:j)])+max(day9$number[c(i:j)])
+    break
+  }
+}
