@@ -534,3 +534,50 @@ for(i in 1:nrow(day9)){
     break
   }
 }
+
+###################################################################
+
+### Day 10
+
+## Read in data
+day10<-read.table("day10.txt",col.names=c("adapters"))
+
+## get device joltage
+device<-max(day10$adapters+3)
+## sort joltages
+sorted<-sort(day10$adapters)
+## get differences
+differences<-c(sorted,device)-c(0,sorted)
+diffs<-table(differences)
+## multiply differences of 1 with differences of 3
+answer1<-diffs["1"]*diffs["3"]
+
+## Find sets of adapters that are grouped
+currVec<-NULL
+noSets<-0
+sets<-list()
+sorteds<-c(0,sorted,device)
+for(i in 2:(length(sorteds)-1)){
+  if (sorteds[i]-sorteds[i-1]==1 & sorteds[i+1]-sorteds[i]==1){
+    currVec<-c(currVec,sorteds[i])
+  } else if (is.vector(currVec)) {
+    noSets<-noSets+1
+    sets[[noSets]]<-currVec
+    currVec<-NULL
+  }
+}
+
+## Get the different combinations given the set size
+combin<-rep(0,length(sets))
+for (i in 1:length(sets)){
+  if(length(sets[[i]])==1){
+    combin[i]<-2
+  } else if(length(sets[[i]])==2){
+    combin[i]<-4
+  } else if(length(sets[[i]])==3){
+    combin[i]<-7
+  }
+}
+## Multiply these combinations together
+answer2<-prod(combin)
+
