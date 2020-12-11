@@ -581,3 +581,395 @@ for (i in 1:length(sets)){
 ## Multiply these combinations together
 answer2<-prod(combin)
 
+###################################################################
+
+### Day 11
+
+## Read in data
+day11<-read.table("day11.txt",col.names=c("seats"))
+
+init_layout<-sapply(day11$seats,function(x)unlist(strsplit(x,"")),USE.NAMES = FALSE)
+
+## Part 1
+
+## Are all 8 adjacent seats empty?
+allAdjacentEmpty<-function(oldLayout,r,c){
+  if (r>1){
+    if (oldLayout[r-1,c]=="#"){
+      return(FALSE)
+    }
+    if (c>1){
+      if (oldLayout[r-1,c-1]=="#"){
+        return(FALSE)
+      }
+    }
+    if (c<ncol(oldLayout)){
+      if(oldLayout[r-1,c+1]=="#"){
+        return(FALSE)
+      }
+    }
+  }
+  if (r<nrow(oldLayout)){
+    if (oldLayout[r+1,c]=="#"){
+      return(FALSE)
+    }
+    if (c>1){
+      if (oldLayout[r+1,c-1]=="#"){
+        return(FALSE)
+      }
+    }
+    if (c<ncol(oldLayout)){
+      if(oldLayout[r+1,c+1]=="#"){
+        return(FALSE)
+      }
+    }
+  }
+  if (c<ncol(oldLayout)){
+    if(oldLayout[r,c+1]=="#"){
+      return(FALSE)
+    }
+  }
+  if (c>1){
+    if (oldLayout[r,c-1]=="#"){
+      return(FALSE)
+    }
+  }    
+  return(TRUE)
+}
+
+## Are there 4 or more occupied adjacent seats?
+fourOrMoreOccupied<-function(oldLayout,r,c){
+  occupied<-0
+  if (r>1){
+    if (oldLayout[r-1,c]=="#"){
+      occupied<-occupied+1
+    }
+    if (c>1){
+      if (oldLayout[r-1,c-1]=="#"){
+        occupied<-occupied+1
+      }
+    }
+    if (c<ncol(oldLayout)){
+      if(oldLayout[r-1,c+1]=="#"){
+        occupied<-occupied+1
+      }
+    }
+  }
+  if (r<nrow(oldLayout)){
+    if (oldLayout[r+1,c]=="#"){
+      occupied<-occupied+1
+    }
+    if (c>1){
+      if (oldLayout[r+1,c-1]=="#"){
+        occupied<-occupied+1
+      }
+    }
+    if (c<ncol(oldLayout)){
+      if(oldLayout[r+1,c+1]=="#"){
+        occupied<-occupied+1
+      }
+    }
+  }
+  if (c<ncol(oldLayout)){
+    if(oldLayout[r,c+1]=="#"){
+      occupied<-occupied+1
+    }
+  }
+  if (c>1){
+    if (oldLayout[r,c-1]=="#"){
+      occupied<-occupied+1
+    }
+  }    
+  if (occupied>=4){
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+## Gets the new layout by applying both rules to every seat simultaneously
+getNewLayout<-function(oldLayout){
+  newLayout<-oldLayout
+  for (r in 1:nrow(oldLayout)){
+    for (c in 1:ncol(oldLayout)){
+      if(oldLayout[r,c]=="L"){
+        if (allAdjacentEmpty(oldLayout,r,c)){
+          newLayout[r,c]<-"#"
+        }
+      } else if (oldLayout[r,c]=="#"){
+        if (fourOrMoreOccupied(oldLayout,r,c)){
+          newLayout[r,c]<-"L"
+        }
+      }
+    }
+  }
+  return(newLayout)
+}
+
+## Change the seating according to the rules until
+## an equalibrium is found
+layout<-init_layout
+while(TRUE){
+  newLayout<-getNewLayout(layout)
+  if(isTRUE(all.equal(layout,newLayout))){
+    break
+  } else {
+    layout<-newLayout
+  }
+}
+## Count the number of occupied seats
+answer1<-sum(newLayout=="#")
+
+## Part 2
+
+## Are all 8 visible seats empty?
+allAdjacentVisibleEmpty<-function(oldLayout,r,c){
+  #N
+  tempr<-r
+  while (tempr>1){
+    tempr<-tempr-1
+    if (oldLayout[tempr,c]=="#"){
+      return(FALSE)
+    } 
+    if (oldLayout[tempr,c]=="L"){
+      break
+    }
+  }
+  #S
+  tempr<-r
+  while (tempr<nrow(oldLayout)){
+    tempr<-tempr+1
+    if (oldLayout[tempr,c]=="#"){
+      return(FALSE)
+    } 
+    if (oldLayout[tempr,c]=="L"){
+      break
+    }
+  }
+  #W
+  tempc<-c
+  while (tempc>1){
+    tempc<-tempc-1
+    if (oldLayout[r,tempc]=="#"){
+      return(FALSE)
+    } 
+    if (oldLayout[r,tempc]=="L"){
+      break
+    }
+  }
+  #E
+  tempc<-c
+  while (tempc<ncol(oldLayout)){
+    tempc<-tempc+1
+    if (oldLayout[r,tempc]=="#"){
+      return(FALSE)
+    }
+    if (oldLayout[r,tempc]=="L"){
+      break
+    }
+  }
+  #NE
+  tempr<-r
+  tempc<-c
+  while (tempr>1 & tempc<ncol(oldLayout)){
+    tempr<-tempr-1
+    tempc<-tempc+1
+    if (oldLayout[tempr,tempc]=="#"){
+      return(FALSE)
+    } 
+    if (oldLayout[tempr,tempc]=="L"){
+      break
+    }
+  }
+  #NW
+  tempr<-r
+  tempc<-c
+  while (tempr>1 & tempc>1){
+    tempr<-tempr-1
+    tempc<-tempc-1
+    if (oldLayout[tempr,tempc]=="#"){
+      return(FALSE)
+    }
+    if (oldLayout[tempr,tempc]=="L"){
+      break
+    }
+  }
+  #SW
+  tempr<-r
+  tempc<-c
+  while (tempr<nrow(oldLayout) & tempc>1){
+    tempr<-tempr+1
+    tempc<-tempc-1
+    if (oldLayout[tempr,tempc]=="#"){
+      return(FALSE)
+    } 
+    if (oldLayout[tempr,tempc]=="L"){
+      break
+    }
+  }
+  #SE
+  tempr<-r
+  tempc<-c
+  while (tempr<nrow(oldLayout) & tempc<ncol(oldLayout)){
+    tempr<-tempr+1
+    tempc<-tempc+1
+    if (oldLayout[tempr,tempc]=="#"){
+      return(FALSE)
+    } 
+    if (oldLayout[tempr,tempc]=="L"){
+      break
+    }
+  }
+  return(TRUE)
+  
+}
+
+## Are there 5 or more visibly occupied seats?
+fiveOrMoreVisibleOccupied<-function(oldLayout,r,c){
+  occupied<-0
+  #N
+  tempr<-r
+  while (tempr>1){
+    tempr<-tempr-1
+    if (oldLayout[tempr,c]=="#"){
+      occupied<-occupied+1
+      break
+    } 
+    if (oldLayout[tempr,c]=="L"){
+      break
+    }
+  }
+  #S
+  tempr<-r
+  while (tempr<nrow(oldLayout)){
+    tempr<-tempr+1
+    if (oldLayout[tempr,c]=="#"){
+      occupied<-occupied+1
+      break
+    } 
+    if (oldLayout[tempr,c]=="L"){
+      break
+    }
+  }
+  #W
+  tempc<-c
+  while (tempc>1){
+    tempc<-tempc-1
+    if (oldLayout[r,tempc]=="#"){
+      occupied<-occupied+1
+      break
+    } 
+    if (oldLayout[r,tempc]=="L"){
+      break
+    }
+  }
+  #E
+  tempc<-c
+  while (tempc<ncol(oldLayout)){
+    tempc<-tempc+1
+    if (oldLayout[r,tempc]=="#"){
+      occupied<-occupied+1
+      break
+    } 
+    if (oldLayout[r,tempc]=="L"){
+      break
+    }
+  }
+  #NE
+  tempr<-r
+  tempc<-c
+  while (tempr>1 & tempc<ncol(oldLayout)){
+    tempr<-tempr-1
+    tempc<-tempc+1
+    if (oldLayout[tempr,tempc]=="#"){
+      occupied<-occupied+1
+      break
+    } 
+    if (oldLayout[tempr,tempc]=="L"){
+      break
+    }
+  }
+  #NW
+  tempr<-r
+  tempc<-c
+  while (tempr>1 & tempc>1){
+    tempr<-tempr-1
+    tempc<-tempc-1
+    if (oldLayout[tempr,tempc]=="#"){
+      occupied<-occupied+1
+      break
+    } 
+    if (oldLayout[tempr,tempc]=="L"){
+      break
+    }
+  }
+  #SW
+  tempr<-r
+  tempc<-c
+  while (tempr<nrow(oldLayout) & tempc>1){
+    tempr<-tempr+1
+    tempc<-tempc-1
+    if (oldLayout[tempr,tempc]=="#"){
+      occupied<-occupied+1
+      break
+    } 
+    if (oldLayout[tempr,tempc]=="L"){
+      break
+    }
+  }
+  #SE
+  tempr<-r
+  tempc<-c
+  while (tempr<nrow(oldLayout) & tempc<ncol(oldLayout)){
+    tempr<-tempr+1
+    tempc<-tempc+1
+    if (oldLayout[tempr,tempc]=="#"){
+      occupied<-occupied+1
+      break
+    } 
+    if (oldLayout[tempr,tempc]=="L"){
+      break
+    }
+  }
+  
+  if (occupied>=5){
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+## Gets the new layout by applying both rules to every seat simultaneously
+getNewLayout2<-function(oldLayout){
+  newLayout<-oldLayout
+  for (r in 1:nrow(oldLayout)){
+    for (c in 1:ncol(oldLayout)){
+      if(oldLayout[r,c]=="L"){
+        if (allAdjacentVisibleEmpty(oldLayout,r,c)){
+          newLayout[r,c]<-"#"
+        }
+      } else if (oldLayout[r,c]=="#"){
+        if (fiveOrMoreVisibleOccupied(oldLayout,r,c)){
+          newLayout[r,c]<-"L"
+        }
+      }
+    }
+  }
+  return(newLayout)
+}
+
+## Change the seating according to the rules until
+## an equalibrium is found
+layout<-init_layout
+while(TRUE){
+  newLayout<-getNewLayout2(layout)
+  if(isTRUE(all.equal(layout,newLayout))){
+    break
+  } else {
+    layout<-newLayout
+  }
+}
+## Count the number of occupied seats
+answer2<-sum(newLayout=="#")
+
+
