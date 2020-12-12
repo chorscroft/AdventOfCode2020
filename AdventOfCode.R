@@ -972,4 +972,93 @@ while(TRUE){
 ## Count the number of occupied seats
 answer2<-sum(newLayout=="#")
 
+###################################################################
 
+### Day 12
+
+## Read in data
+day12<-read.table("day12.txt",col.names=c("directions"))
+
+## Part 1
+
+facing<-"E"
+compass<-c("N","E","S","W")
+coord<-c(0,0) ##north,east
+for (i in 1:nrow(day12)){
+  letter<-substr(day12$directions[i],1,1)
+  number<-as.numeric(substr(day12$directions[i],2,nchar(day12$directions[i])))
+  if(letter=="E"){
+    coord[2]<-coord[2]+number
+  } else if(letter=="W"){
+    coord[2]<-coord[2]-number
+  } else if(letter=="N"){
+    coord[1]<-coord[1]+number
+  } else if(letter=="S"){
+    coord[1]<-coord[1]-number
+  } else if(letter=="R"){
+    currentComp<-which(compass==facing)
+    turn<-number/90
+    currentComp<-currentComp+turn
+    while (currentComp>4){
+      currentComp<-currentComp-4
+    }
+    facing<-compass[currentComp]
+  } else if(letter=="L"){
+    currentComp<-which(compass==facing)
+    turn<-number/90
+    currentComp<-currentComp-turn
+    while (currentComp<1){
+      currentComp<-currentComp+4
+    }
+    facing<-compass[currentComp]
+  } else if(letter=="F"){
+    if(facing=="E"){
+      coord[2]<-coord[2]+number
+    } else if(facing=="W"){
+      coord[2]<-coord[2]-number
+    } else if(facing=="N"){
+      coord[1]<-coord[1]+number
+    } else if(facing=="S"){
+      coord[1]<-coord[1]-number
+    } 
+  }
+}
+
+answer1<-abs(coord[1])+abs(coord[2])
+
+## Part 2
+
+coord<-c(0,0) ##north,east
+waypoint<-c(1,10) ##north,east
+for (i in 1:nrow(day12)){
+  letter<-substr(day12$directions[i],1,1)
+  number<-as.numeric(substr(day12$directions[i],2,nchar(day12$directions[i])))
+  if(letter=="E"){
+    waypoint[2]<-waypoint[2]+number
+  } else if(letter=="W"){
+    waypoint[2]<-waypoint[2]-number
+  } else if(letter=="N"){
+    waypoint[1]<-waypoint[1]+number
+  } else if(letter=="S"){
+    waypoint[1]<-waypoint[1]-number
+  } else if(letter=="R"){
+    turn<-number/90
+    for (t in 1:turn){
+      oldwaypoint<-waypoint
+      waypoint[1]<--oldwaypoint[2]
+      waypoint[2]<-oldwaypoint[1]
+    }
+  } else if(letter=="L"){
+    turn<-number/90
+    for (t in 1:turn){
+      oldwaypoint<-waypoint
+      waypoint[1]<-oldwaypoint[2]
+      waypoint[2]<--oldwaypoint[1]
+    }
+  } else if(letter=="F"){
+    coord[1]<-coord[1]+number*waypoint[1]
+    coord[2]<-coord[2]+number*waypoint[2]
+  }
+}
+
+answer2<-abs(coord[1])+abs(coord[2])
