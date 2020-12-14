@@ -1062,3 +1062,56 @@ for (i in 1:nrow(day12)){
 }
 
 answer2<-abs(coord[1])+abs(coord[2])
+
+###################################################################
+
+### Day 13
+
+## Read in data
+day13<-read.table("day13.txt",col.names=c("bus"))
+
+time<-as.numeric(day13[1,1])
+busses<-unlist(strsplit(day13[2,1],","))
+
+offset<-0:(length(busses)-1)
+foffset<-offset[busses!="x"]
+fbusses<-as.numeric(busses[busses!="x"])
+
+mintime<-time
+minbus<-0
+for (bus in fbusses){
+  waittime<-bus-time%%bus
+  if(waittime<mintime){
+    mintime<-waittime
+    minbus<-bus
+  }
+}
+
+answer1<-minbus*mintime
+
+getTime<-function(fbusses,foffset){
+  number1<-fbusses[1]  
+  offset1<-fbusses[1]-foffset[1]  
+  for (busno in 2:length(fbusses)){
+
+    number2<-fbusses[busno]
+    offset2<-fbusses[busno]-foffset[busno]
+    if (offset2==fbusses[busno]){
+      offset2<-0
+    }
+    while(offset2<0){
+      offset2<-offset2+fbusses[busno]
+    }
+    
+    for (i in 1:number2){
+      if(((number1*i+offset1)%%number2)==offset2){
+        break
+      }
+    }
+    offset1<-number1*i+offset1
+    number1<-number1*number2
+  }
+  return(offset1)
+}
+
+answer2<-getTime(fbusses,foffset)
