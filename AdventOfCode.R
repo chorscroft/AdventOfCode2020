@@ -1115,3 +1115,120 @@ getTime<-function(fbusses,foffset){
 }
 
 answer2<-getTime(fbusses,foffset)
+
+###################################################################
+
+### Day 14
+
+## Apply mask to the number
+applyMask<-function(mask,number){
+  splitMask<-unlist(strsplit(mask,""))
+  binNumber<-convertToBinary(number,36)
+  for (i in 1:36){
+    if(splitMask[i]!="X"){
+      binNumber[i]<-splitMask[i]
+    }
+  }
+  newNumber<-convertFromBinary(binNumber)
+  return(newNumber)
+}
+## convert decimal to binary number
+convertToBinary<-function(number,len){
+  bin<-rep(0,len)
+  i<-1
+  while(number>0){
+    if (number>=2^(len-i)){
+      bin[i]=1
+      number<-number-2^(len-i)
+    }
+    i<-i+1
+  }
+  return(bin)
+}
+## convert from binary to decimal
+convertFromBinary<-function(binNumber){
+  newNumber<-0
+  for (i in 1:36){
+    newNumber<-newNumber+as.numeric(binNumber[i])*(2^(36-i))
+  }
+  return(newNumber)
+}
+
+## Create mem vector
+mem<-rep(0,99999)
+## read in file line by line 
+day14<-file("day14.txt","r")
+while (TRUE){
+  line = readLines(day14, n = 1)
+  if (length(line) == 0){
+    break
+  } else if (substring(line,1,4)=="mask") {
+    mask<-substring(line,8,nchar(line))
+  } else {
+    memory<-unlist(strsplit(line," "))
+    index<-as.numeric(substring(memory[1],5,nchar(memory[1])-1))
+    number<-as.numeric(memory[3])
+    newNumber<-applyMask(mask,number)
+    mem[index]<-newNumber
+  }
+}
+close(day14)
+answer1<-sum(mem)
+
+## Part 2
+
+## Get new indexes after masking
+getNewIndex<-function(mask,index){
+  binIndex<-convertToBinary(index,36)
+  splitMask<-unlist(strsplit(mask,""))
+  for (i in 1:36){
+    if (splitMask[i]!="0"){
+      binIndex[i]<-splitMask[i]
+    }
+  }
+  noX<-sum(binIndex=="X")
+  if (noX>0){
+    newIndex<-rep(0,noX)
+    Xloc<-which(binIndex=="X")
+    for (i in 1:(2^noX)){
+      tempIndex<-binIndex
+      replace<-convertToBinary(i-1,noX)
+      tempIndex[Xloc]<-replace
+      newIndex[i]<-convertFromBinary(tempIndex)
+    }
+  } else {
+    newIndex<-convertFromBinary(binIndex)
+  }
+  return(newIndex)
+}
+
+## Initialise vector of indexes and corresponding numbers
+memind<-0
+memnum<-0
+##read in file line by line
+day14<-file("day14.txt","r")
+while (TRUE){
+  line = readLines(day14, n = 1)
+  if (length(line) == 0){
+    break
+  } else if (substring(line,1,4)=="mask") {
+    mask<-substring(line,8,nchar(line))
+  } else {
+    memory<-unlist(strsplit(line," "))
+    index<-as.numeric(substring(memory[1],5,nchar(memory[1])-1))
+    number<-as.numeric(memory[3])
+    newIndex<-getNewIndex(mask,index)
+    for (ind in 1:length(newIndex)){
+      if (sum(memind==newIndex[ind])>0){
+        #replace
+        memnum[which(memind==newIndex[ind])]<-number
+      } else {
+        #add
+        memind<-c(memind,newIndex[ind])
+        memnum<-c(memnum,number)
+      }
+    }
+  }
+}
+close(day14)
+answer2<-sum(memnum)
