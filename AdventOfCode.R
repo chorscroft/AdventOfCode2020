@@ -1232,3 +1232,226 @@ while (TRUE){
 }
 close(day14)
 answer2<-sum(memnum)
+
+###################################################################
+
+### Day 15
+
+## Read in data
+numbers<-c(9,12,1,4,17,0,18)
+
+while (length(numbers)<2020){
+  before<-which(numbers[length(numbers)]==numbers[-length(numbers)])
+  if (length(before)==0){
+    numbers<-c(numbers,0)
+  } else {
+    numbers<-c(numbers,length(numbers)-before[length(before)])
+  }
+}
+answer1<-numbers[2020]
+
+## Part 2
+numbers<-rep(0,30000000)
+numbers[9]<-1
+numbers[12]<-2
+numbers[1]<-3
+numbers[4]<-4
+numbers[17]<-5
+zero<-6
+
+count<-7
+number<-18
+while (count<30000000){
+  if (number==0){
+    number<-count-zero
+    zero<-count
+  } else {
+    if(numbers[number]==0){
+      numbers[number]<-count
+      number<-0
+    } else {
+      newnumber<-count-numbers[number]
+      numbers[number]<-count
+      number<-newnumber
+    }
+  }
+  count<-count+1
+}
+answer2<-number
+
+###################################################################
+
+### Day 16
+
+## Read in data
+tickets<-read.csv("day16.txt",skip=25,header=FALSE)
+## Read in data
+myTicket<-read.csv("day16.txt",skip=22,nrows=1,header=FALSE)
+##
+rules<-read.table("day16.txt",nrows=20,sep = ":")
+
+## get just the numbers from the rules
+rules_param<-apply(sapply(unlist(strsplit(rules$V2," or ")),function(x)unlist(strsplit(x,"-")),USE.NAMES = FALSE),c(1,2),as.numeric)
+
+# min and max numnber in rules
+mini<-min(rules_param[1,])
+maxi<-max(rules_param[2,])
+
+# find any numbers that would not be allowed
+isOkay<-rep(FALSE,maxi)
+for (i in 1:ncol(rules_param)){
+  isOkay[rules_param[1,i]:rules_param[2,i]]<-TRUE
+}
+which(isOkay==FALSE)
+## only those smaller than the minimum number and larger than the
+## maximum number are not allowed
+
+notallowed<-tickets<mini | tickets>maxi
+answer1<-sum(tickets[notallowed])
+
+## Part 2
+
+## filter out the invalid tickets
+okayTickets<-apply(notallowed,1,sum)
+newTickets<-tickets[which(okayTickets==0),]
+
+## Matrix to say which rule (rows) could be in which position of the ticket (columns)
+rulesPos<-matrix(FALSE,nrow=20,ncol=20)
+
+for (i in 1:20){
+  ## test rules against each position
+  for (j in 1:20){
+    if (sum((newTickets[,j]>=rules_param[1,i*2-1]& newTickets[,j]<=rules_param[2,i*2-1] ) | (newTickets[,j]>=rules_param[1,i*2] & newTickets[,j]<=rules_param[2,i*2]))==nrow(newTickets)){
+      rulesPos[i,j]<-TRUE
+    }
+  }
+}
+
+## now find which rule goes with each position,
+## given they must match one-to-one
+uniqRules<-rulesPos
+finalRulesPos<-rep(0,20)
+for (i in 1:20){
+  # find row with only one true
+  for (x in 1:20){
+    if (sum(uniqRules[x,])==TRUE){
+      break
+    }
+  }
+  #write to vector
+  finalRulesPos[x]<-which(uniqRules[x,]==TRUE)
+  #make column & row FALSE
+  uniqRules[x,]<-FALSE
+  uniqRules[,finalRulesPos[x]]<-FALSE
+}
+
+answer2<-prod(myTicket[finalRulesPos[1:6]])
+
+###################################################################
+
+### Day 17
+
+## read in the initial layout
+day17<-read.table("day17.txt",col.names=c("cubes"),comment.char = "/")
+init_layout<-sapply(day17$cubes,function(x)unlist(strsplit(x,"")),USE.NAMES = FALSE)
+
+## start with 8x8x1 grid, after the 6th cycle will have:
+## 20*20*13
+## give self wiggle room 22*22*15
+
+init_array<-array(rep(".",22*22*15),dim=c(22,22,15))
+init_array[8:15,8:15,8]<-init_layout
+
+## get the number of active neighbours
+countActiveNeighbours<-function(current_array,i,j,k){
+  count<-0
+  for (xi in (i-1):(i+1)){
+    for (xj in (j-1):(j+1)){
+      for (xk in (k-1):(k+1)){
+        if (!(xi == i & xj == j & xk==k)){
+          if (current_array[xi,xj,xk]=="#"){
+            count<-count+1
+          } 
+        }
+      }
+    }
+  }
+  return(count)
+}
+
+## do cycles
+current_array<-init_array
+next_array<-current_array
+for(cycle in 1:6){
+  for(i in 2:21){
+    for (j in 2:21){
+      for (k in 2:14){
+        tempcount<-countActiveNeighbours(current_array,i,j,k)
+        if(current_array[i,j,k]=="."){
+          if (tempcount==3){
+            next_array[i,j,k]<-"#"
+          }
+        } else {
+          if (tempcount != 3 & tempcount != 2){
+            next_array[i,j,k]<-"."
+          }
+        }
+      }
+    }
+  }
+  current_array<-next_array
+}
+
+answer1<-sum(next_array=="#")
+
+## Part 2
+
+##Initialise array with 4 dimensions
+init_array<-array(rep(".",22*22*15*15),dim=c(22,22,15,15))
+init_array[8:15,8:15,8,8]<-init_layout
+
+## count active neighbours in 4D
+countActiveNeighbours<-function(current_array,i,j,k,l){
+  count<-0
+  for (xi in (i-1):(i+1)){
+    for (xj in (j-1):(j+1)){
+      for (xk in (k-1):(k+1)){
+        for (xl in (l-1):(l+1)){
+          if (!(xi == i & xj == j & xk==k & xl ==l)){
+            if (current_array[xi,xj,xk,xl]=="#"){
+              count<-count+1
+            } 
+          }
+        }
+      }
+    }
+  }
+  return(count)
+}
+
+## do cycles
+current_array<-init_array
+next_array<-current_array
+for(cycle in 1:6){
+  for(i in 2:21){
+    for (j in 2:21){
+      for (k in 2:14){
+        for (l in 2:14){
+          tempcount<-countActiveNeighbours(current_array,i,j,k,l)
+          if(current_array[i,j,k,l]=="."){
+            if (tempcount==3){
+              next_array[i,j,k,l]<-"#"
+            }
+          } else {
+            if (tempcount != 3 & tempcount != 2){
+              next_array[i,j,k,l]<-"."
+            }
+          }
+        }
+      }
+    }
+  }
+  current_array<-next_array
+}
+
+answer2<-sum(next_array=="#")
