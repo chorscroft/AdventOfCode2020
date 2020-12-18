@@ -1455,3 +1455,104 @@ for(cycle in 1:6){
 }
 
 answer2<-sum(next_array=="#")
+
+###################################################################
+
+### Day 18
+
+## read in the initial layout
+day18<-read.table("day18.txt",col.names=c("equations"),sep="#")
+
+evaluateEquation<-function(equ){
+  equ<-gsub(" ","",equ)
+  total<-0
+  operator<-"Add"
+  i<-1
+  while(i <= nchar(equ)){
+    if(substring(equ,i,i)=="+"){
+      operator<-"Add"
+    } else if (substring(equ,i,i)=="*"){
+      operator<-"Multi"
+    } else if (substring(equ,i,i)=="("){
+      values<-evaluateEquation(substring(equ,i+1,nchar(equ)))
+      number<-values[1]
+      if(operator=="Add"){
+        total<-total+number
+      } else {
+        total<-total*number
+      }
+      i<-i+values[2]
+    } else if (substring(equ,i,i)==")"){
+      return(c(total,i))
+    } else {
+      number<-as.numeric(substring(equ,i,i))
+      if(operator=="Add"){
+        total<-total+number
+      } else {
+        total<-total*number
+      }
+    }
+    i<-i+1
+  }
+  return(c(total,i))
+}
+
+answers<-unname(sapply(day18$equations,function(x)evaluateEquation(x)[1]))
+answer1<-sum(answers)
+
+## part 2
+
+## brackets first
+
+solveEqu<-function(equation){
+  equation<-gsub(" ","",equation)
+  while(is.na(as.numeric(equation))){
+    ##bracket loop
+    bracket<-regexpr("[(]{1}[0-9+*]+[)]{1}",equation)
+    if (bracket>0){
+      equ<-substring(equation,bracket+1,bracket+attr(bracket,"match.length")-2)
+      
+      ## all the x + y
+      plus<-regexpr("[0-9]+[+]{1}[0-9]+",equ)
+      while (plus>0){
+        sum<-substring(equ,plus,plus+attr(plus,"match.length")-1)
+        number<-as.numeric(substring(sum,1,regexpr("[+]",sum)-1))+as.numeric(substring(sum,regexpr("[+]",sum)+1,nchar(sum)))
+        equ<-paste0(substring(equ,1,plus-1),number,substring(equ,plus+attr(plus,"match.length"),nchar(equ)))
+        plus<-regexpr("[0-9]+[+]{1}[0-9]+",equ)
+      }
+      
+      ## all the x * y
+      multi<-regexpr("[0-9]+[*]{1}[0-9]+",equ)
+      while (multi>0){
+        produ<-substring(equ,multi,multi+attr(multi,"match.length")-1)
+        number<-as.numeric(substring(produ,1,regexpr("[*]",produ)-1))*as.numeric(substring(produ,regexpr("[*]",produ)+1,nchar(produ)))
+        equ<-paste0(substring(equ,1,multi-1),number,substring(equ,multi+attr(multi,"match.length"),nchar(equ)))
+        multi<-regexpr("[0-9]+[*]{1}[0-9]+",equ)
+      }
+      equation<-paste0(substring(equation,1,bracket-1),equ,substring(equation,bracket+attr(bracket,"match.length"),nchar(equation)))
+    } else {
+      equ<-equation
+      ## all the x + y
+      plus<-regexpr("[0-9]+[+]{1}[0-9]+",equ)
+      while (plus>0){
+        sum<-substring(equ,plus,plus+attr(plus,"match.length")-1)
+        number<-as.numeric(substring(sum,1,regexpr("[+]",sum)-1))+as.numeric(substring(sum,regexpr("[+]",sum)+1,nchar(sum)))
+        equ<-paste0(substring(equ,1,plus-1),number,substring(equ,plus+attr(plus,"match.length"),nchar(equ)))
+        plus<-regexpr("[0-9]+[+]{1}[0-9]+",equ)
+      }
+      
+      ## all the x * y
+      multi<-regexpr("[0-9]+[*]{1}[0-9]+",equ)
+      while (multi>0){
+        produ<-substring(equ,multi,multi+attr(multi,"match.length")-1)
+        number<-as.numeric(substring(produ,1,regexpr("[*]",produ)-1))*as.numeric(substring(produ,regexpr("[*]",produ)+1,nchar(produ)))
+        equ<-paste0(substring(equ,1,multi-1),number,substring(equ,multi+attr(multi,"match.length"),nchar(equ)))
+        multi<-regexpr("[0-9]+[*]{1}[0-9]+",equ)
+      }
+      equation<-equ
+    }
+  }
+  return(as.numeric(equation))
+}
+answers<-unname(sapply(day18$equations,solveEqu))
+answer2<-sum(answers)
