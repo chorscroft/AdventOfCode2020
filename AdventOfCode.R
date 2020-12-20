@@ -1556,3 +1556,557 @@ solveEqu<-function(equation){
 }
 answers<-unname(sapply(day18$equations,solveEqu))
 answer2<-sum(answers)
+
+###################################################################
+
+### Day 19 INCOMPLETE
+
+## read in the data
+rules<-read.table("day19.txt",col.names=c("number","rule"),sep=":",nrows=135)
+messages<-read.table("day19.txt",col.names=c("messages"),skip=136)
+
+rules<-rules[order(rules$number),]
+rule0<-rules[1,2]
+rule0<-unlist(strsplit(rule0," "))
+rule0<-rule0[-1]
+rules<-rules[-1,]
+
+rules_split<-sapply(rules$rule,function(x)unlist(strsplit(x," ")),USE.NAMES = FALSE)
+rules_split<-lapply(rules_split,function(x)x[-1])
+
+
+rules_split[[6]]
+rule1<-grep('[ab]',rules$rule)
+
+message<-unlist(strsplit(messages$messages[1],""))
+
+checkMessage<-function(message){
+  for (i in 1:length(rule0)){
+    rule0[i]
+  }
+}
+
+###################################################################
+
+### Day 20
+
+## read tiles into a list of matrices
+day20<-file("day20.txt","r")
+tiles<-list()
+while (TRUE){
+  line = readLines(day20, n = 1)
+  if (length(line) == 0){
+    break
+  } else if (line==""){
+    tiles[[tileNo]]<-tileLayout
+  } else if (substring(line,1,4)=="Tile") {
+    tileNo<-substring(line,6,9)
+    tileLayout<-matrix(".",10,10)
+    tileline<-1
+  } else {
+    tileLayout[tileline,]<-unlist(strsplit(line,""))
+    tileline<-tileline+1
+  }
+}
+close(day20)
+
+## Find the number of unique sides a tiles has
+countOfUniqueSides<-function(tileIndex){
+  side1<-tiles[[tileIndex]][1,] #top
+  side2<- tiles[[tileIndex]][,10] #right
+  side3<-tiles[[tileIndex]][10,10:1]  #bottom
+  side4<-tiles[[tileIndex]][10:1,1] #left
+  
+  uniqueSides<-0
+  thisUnique<-TRUE
+  for (i in 1:144){
+    if (i!=tileIndex){
+      if (isTRUE(all.equal(side1,tiles[[i]][1,10:1])) | isTRUE(all.equal(side1,tiles[[i]][10:1,10])) | isTRUE(all.equal(side1,tiles[[i]][10,])) | isTRUE(all.equal(side1,tiles[[i]][,1]))
+           | isTRUE(all.equal(side1,tiles[[i]][1,1:10])) | isTRUE(all.equal(side1,tiles[[i]][1:10,10])) | isTRUE(all.equal(side1,tiles[[i]][10,10:1])) | isTRUE(all.equal(side1,tiles[[i]][10:1,1]))){
+        thisUnique<-FALSE
+        break
+      }
+    }
+  }
+  if (thisUnique){
+    uniqueSides<-uniqueSides+1
+  }
+
+  thisUnique<-TRUE
+  for (i in 1:144){
+    if (i!=tileIndex){
+      if (isTRUE(all.equal(side2,tiles[[i]][1,10:1])) | isTRUE(all.equal(side2,tiles[[i]][10:1,10])) | isTRUE(all.equal(side2,tiles[[i]][10,])) | isTRUE(all.equal(side2,tiles[[i]][,1]))
+        | isTRUE(all.equal(side2,tiles[[i]][1,1:10])) | isTRUE(all.equal(side2,tiles[[i]][1:10,10])) | isTRUE(all.equal(side2,tiles[[i]][10,10:1])) | isTRUE(all.equal(side2,tiles[[i]][10:1,1]))){        
+        thisUnique<-FALSE
+        break
+      }
+    }
+  }
+  if (thisUnique){
+    uniqueSides<-uniqueSides+1
+  }
+  thisUnique<-TRUE
+  for (i in 1:144){
+    if (i!=tileIndex){
+      if (isTRUE(all.equal(side3,tiles[[i]][1,10:1])) | isTRUE(all.equal(side3,tiles[[i]][10:1,10])) | isTRUE(all.equal(side3,tiles[[i]][10,])) | isTRUE(all.equal(side3,tiles[[i]][,1]))
+        | isTRUE(all.equal(side3,tiles[[i]][1,1:10])) | isTRUE(all.equal(side3,tiles[[i]][1:10,10])) | isTRUE(all.equal(side3,tiles[[i]][10,10:1])) | isTRUE(all.equal(side3,tiles[[i]][10:1,1]))){
+        thisUnique<-FALSE
+        break
+      }
+    }
+  }
+  if (thisUnique){
+    uniqueSides<-uniqueSides+1
+  }
+  thisUnique<-TRUE
+  for (i in 1:144){
+    if (i!=tileIndex){
+      if (isTRUE(all.equal(side4,tiles[[i]][1,10:1])) | isTRUE(all.equal(side4,tiles[[i]][10:1,10])) | isTRUE(all.equal(side4,tiles[[i]][10,])) | isTRUE(all.equal(side4,tiles[[i]][,1]))
+        | isTRUE(all.equal(side4,tiles[[i]][1,1:10])) | isTRUE(all.equal(side4,tiles[[i]][1:10,10])) | isTRUE(all.equal(side4,tiles[[i]][10,10:1])) | isTRUE(all.equal(side4,tiles[[i]][10:1,1]))){
+        thisUnique<-FALSE
+        break
+      }
+    }
+  }
+  if (thisUnique){
+    uniqueSides<-uniqueSides+1
+  }
+  
+  return(uniqueSides)
+}
+
+## find the number of unique sides for each tile
+uniqueSides<-rep(0,144)
+for (i in 1:144){
+  uniqueSides[i]<-countOfUniqueSides(i)
+}
+## find the products of the corners (tiles with 2 unique sides)
+answer1<-prod(as.numeric(names(tiles)[which(uniqueSides==2)]))
+
+## Part 2
+
+## rotate a tile
+rotateTile<-function(tile){
+  dims<-dim(tile) #assume square
+  newTile<-matrix(".",dims[1],dims[1])
+  for (i in 1:dims[1]){
+    for (j in 1:dims[1]){
+      newTile[j,dims[1]+1-i]<-tile[i,j]
+    }
+  }
+  return(newTile)
+}
+## flip a tile
+flipTileHoriz<-function(tile){
+  dims<-dim(tile) #assume square
+  newTile<-matrix(".",dims[1],dims[1])
+  for (i in 1:dims[1]){
+    for (j in 1:dims[1]){
+      newTile[i,dims[1]+1-j]<-tile[i,j]
+    }
+  }
+  return(newTile)
+}
+## find which of the sides of a tile are unique
+whichUniqueSides<-function(tile,tileIndex){
+  side<-c(0,0,0,0) #top, right, bottom, left
+  side1<-tile[1,]
+  side2<- tile[,10]
+  side3<-tile[10,10:1]  
+  side4<-tile[10:1,1]
+  
+  thisUnique<-TRUE
+  for (i in 1:144){
+    if (i!=tileIndex){
+      if (isTRUE(all.equal(side1,tiles[[i]][1,10:1])) | isTRUE(all.equal(side1,tiles[[i]][10:1,10])) | isTRUE(all.equal(side1,tiles[[i]][10,])) | isTRUE(all.equal(side1,tiles[[i]][,1]))
+          | isTRUE(all.equal(side1,tiles[[i]][1,1:10])) | isTRUE(all.equal(side1,tiles[[i]][1:10,10])) | isTRUE(all.equal(side1,tiles[[i]][10,10:1])) | isTRUE(all.equal(side1,tiles[[i]][10:1,1]))){
+        thisUnique<-FALSE
+        break
+      }
+    }
+  }
+  if (thisUnique){
+    side[1]<-1
+  }
+  
+  thisUnique<-TRUE
+  for (i in 1:144){
+    if (i!=tileIndex){
+      if (isTRUE(all.equal(side2,tiles[[i]][1,10:1])) | isTRUE(all.equal(side2,tiles[[i]][10:1,10])) | isTRUE(all.equal(side2,tiles[[i]][10,])) | isTRUE(all.equal(side2,tiles[[i]][,1]))
+          | isTRUE(all.equal(side2,tiles[[i]][1,1:10])) | isTRUE(all.equal(side2,tiles[[i]][1:10,10])) | isTRUE(all.equal(side2,tiles[[i]][10,10:1])) | isTRUE(all.equal(side2,tiles[[i]][10:1,1]))){        
+        thisUnique<-FALSE
+        break
+      }
+    }
+  }
+  if (thisUnique){
+    side[2]<-1
+  }
+  thisUnique<-TRUE
+  for (i in 1:144){
+    if (i!=tileIndex){
+      if (isTRUE(all.equal(side3,tiles[[i]][1,10:1])) | isTRUE(all.equal(side3,tiles[[i]][10:1,10])) | isTRUE(all.equal(side3,tiles[[i]][10,])) | isTRUE(all.equal(side3,tiles[[i]][,1]))
+          | isTRUE(all.equal(side3,tiles[[i]][1,1:10])) | isTRUE(all.equal(side3,tiles[[i]][1:10,10])) | isTRUE(all.equal(side3,tiles[[i]][10,10:1])) | isTRUE(all.equal(side3,tiles[[i]][10:1,1]))){
+        thisUnique<-FALSE
+        break
+      }
+    }
+  }
+  if (thisUnique){
+    side[3]<-1
+  }
+  thisUnique<-TRUE
+  for (i in 1:144){
+    if (i!=tileIndex){
+      if (isTRUE(all.equal(side4,tiles[[i]][1,10:1])) | isTRUE(all.equal(side4,tiles[[i]][10:1,10])) | isTRUE(all.equal(side4,tiles[[i]][10,])) | isTRUE(all.equal(side4,tiles[[i]][,1]))
+          | isTRUE(all.equal(side4,tiles[[i]][1,1:10])) | isTRUE(all.equal(side4,tiles[[i]][1:10,10])) | isTRUE(all.equal(side4,tiles[[i]][10,10:1])) | isTRUE(all.equal(side4,tiles[[i]][10:1,1]))){
+        thisUnique<-FALSE
+        break
+      }
+    }
+  }
+  if (thisUnique){
+    side[4]<-1
+  }
+  
+  return(side)
+}
+## Test if a tile matches an already placed puzzle piece, and that
+## its unique side touches an edge
+isMatch<-function(tileIndex,trows,tcols,puzzleVec,uniqueSides=NULL){
+  tempTile<-tiles[[tileIndex]]
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec))){
+    if (is.null(uniqueSides)){
+      return(tempTile)
+    } else {
+      if(isTRUE(all.equal(whichUniqueSides(tempTile,tileIndex),uniqueSides))){
+        return(tempTile)
+      }
+    }
+  }    
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec))){
+    if (is.null(uniqueSides)){
+      return(tempTile)
+    } else {
+      if(isTRUE(all.equal(whichUniqueSides(tempTile,tileIndex),uniqueSides))){
+        return(tempTile)
+      }
+    }
+  }   
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec))){
+    if (is.null(uniqueSides)){
+      return(tempTile)
+    } else {
+      if(isTRUE(all.equal(whichUniqueSides(tempTile,tileIndex),uniqueSides))){
+        return(tempTile)
+      }
+    }
+  }   
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec))){
+    if (is.null(uniqueSides)){
+      return(tempTile)
+    } else {
+      if(isTRUE(all.equal(whichUniqueSides(tempTile,tileIndex),uniqueSides))){
+        return(tempTile)
+      }
+    }
+  }   
+  tempTile<-flipTileHoriz(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec))){
+    if (is.null(uniqueSides)){
+      return(tempTile)
+    } else {
+      if(isTRUE(all.equal(whichUniqueSides(tempTile,tileIndex),uniqueSides))){
+        return(tempTile)
+      }
+    }
+  } 
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec))){
+    if (is.null(uniqueSides)){
+      return(tempTile)
+    } else {
+      if(isTRUE(all.equal(whichUniqueSides(tempTile,tileIndex),uniqueSides))){
+        return(tempTile)
+      }
+    }
+  }   
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec))){
+    if (is.null(uniqueSides)){
+      return(tempTile)
+    } else {
+      if(isTRUE(all.equal(whichUniqueSides(tempTile,tileIndex),uniqueSides))){
+        return(tempTile)
+      }
+    }
+  }   
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec))){
+    if (is.null(uniqueSides)){
+      return(tempTile)
+    } else {
+      if(isTRUE(all.equal(whichUniqueSides(tempTile,tileIndex),uniqueSides))){
+        return(tempTile)
+      }
+    }
+  }   
+  return(FALSE)
+}
+
+## Test if a tile matches two already placed puzzle pieces
+isDoubleMatch<-function(tileIndex,trows,tcols,puzzleVec,trows2,tcols2,puzzleVec2){
+  tempTile<-tiles[[tileIndex]]
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec)) & isTRUE(all.equal(tempTile[trows2,tcols2],puzzleVec2))){
+    return(tempTile)
+  }    
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec)) & isTRUE(all.equal(tempTile[trows2,tcols2],puzzleVec2))){
+    return(tempTile)
+  }   
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec)) & isTRUE(all.equal(tempTile[trows2,tcols2],puzzleVec2))){
+    return(tempTile)
+  }   
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec)) & isTRUE(all.equal(tempTile[trows2,tcols2],puzzleVec2))){
+    return(tempTile)
+  }   
+  tempTile<-flipTileHoriz(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec)) & isTRUE(all.equal(tempTile[trows2,tcols2],puzzleVec2))){
+    return(tempTile)
+  } 
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec)) & isTRUE(all.equal(tempTile[trows2,tcols2],puzzleVec2))){
+    return(tempTile)
+  }   
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec)) & isTRUE(all.equal(tempTile[trows2,tcols2],puzzleVec2))){
+    return(tempTile)
+  }   
+  tempTile<-rotateTile(tempTile)
+  if(isTRUE(all.equal(tempTile[trows,tcols],puzzleVec)) & isTRUE(all.equal(tempTile[trows2,tcols2],puzzleVec2))){
+    return(tempTile)
+  }   
+  return(FALSE)
+}
+
+## put the puzzle together
+corners<-which(uniqueSides==2)
+edges<-which(uniqueSides==1)
+middles<-which(uniqueSides==0)
+
+## Make puzzle board
+puzzle<-matrix(0,12,12)
+
+#fit [1,1]
+while(isTRUE(all.equal(whichUniqueSides(tiles[[corners[1]]],corners[1]),c(1,0,0,1)))==FALSE){
+  tiles[[corners[1]]]<-rotateTile(tiles[[corners[1]]])
+}
+puzzle[1,1]<-corners[1]
+#fit [2:11,1]
+for(p in 2:11){
+  i<-1
+  while(i<=length(edges)){
+    tempTile<-isMatch(edges[i],1,c(1:10),tiles[[puzzle[p-1,1]]][10,],c(0,0,0,1)) 
+    if(is.matrix(tempTile)
+       & sum(puzzle==edges[i])==0){
+      tiles[[edges[i]]]<-tempTile
+      break
+    }
+    i<-i+1
+  }
+  puzzle[p,1]<-edges[i]
+}
+#fit [12,1]
+i<-2
+while(i<=length(corners)){
+  tempTile<-isMatch(corners[i],1,c(1:10),tiles[[puzzle[11,1]]][10,],c(0,0,1,1)) 
+  if(is.matrix(tempTile)){
+    tiles[[corners[i]]]<-tempTile
+    break
+  }
+  i<-i+1
+}
+puzzle[12,1]<-corners[i]
+#fit [1,2:11]
+for(p in 2:11){
+  i<-1
+  while(i<=length(edges)){
+    tempTile<-isMatch(edges[i],c(1:10),1,tiles[[puzzle[1,p-1]]][,10],c(1,0,0,0))
+    if(is.matrix(tempTile)
+       & sum(puzzle==edges[i])==0){
+      tiles[[edges[i]]]<-tempTile
+      break
+    }
+    i<-i+1
+  }
+  tiles[[edges[i]]]<-tempTile
+  puzzle[1,p]<-edges[i]
+}
+#fit [1,12]
+i<-2
+while(i<=length(corners)){
+  tempTile<-isMatch(corners[i],1:10,1,tiles[[puzzle[1,11]]][,10],c(1,1,0,0)) 
+  if(is.matrix(tempTile)
+     & sum(puzzle==corners[i])==0){
+    tiles[[corners[i]]]<-tempTile
+    break
+    
+  }
+  i<-i+1
+}
+puzzle[1,12]<-corners[i]
+#fit [12,2:11]
+for(p in 2:11){
+  i<-1
+  while(i<=length(edges)){
+    tempTile<-isMatch(edges[i],c(1:10),1,tiles[[puzzle[12,p-1]]][,10],c(0,0,1,0))
+    if(is.matrix(tempTile)
+       & sum(puzzle==edges[i])==0){
+      tiles[[edges[i]]]<-tempTile
+      break
+    }
+    i<-i+1
+  }
+  tiles[[edges[i]]]<-tempTile
+  puzzle[12,p]<-edges[i]
+}
+#fit [12,12]
+i<-2
+while(i<=length(corners)){
+  tempTile<-isMatch(corners[i],1:10,1,tiles[[puzzle[12,11]]][,10],c(0,1,1,0)) 
+  if(is.matrix(tempTile)
+     & sum(puzzle==corners[i])==0){
+    tiles[[corners[i]]]<-tempTile
+    break
+  }
+  i<-i+1
+}
+puzzle[12,12]<-corners[i]
+#fit [2:11,12]
+for(p in 2:11){
+  i<-1
+  while(i<=length(edges)){
+    tempTile<-isMatch(edges[i],1,c(1:10),tiles[[puzzle[p-1,12]]][10,],c(0,1,0,0)) 
+    if(is.matrix(tempTile)
+       & sum(puzzle==edges[i])==0){
+      tiles[[edges[i]]]<-tempTile
+      break
+    }
+    i<-i+1
+  }
+  tiles[[edges[i]]]<-tempTile
+  puzzle[p,12]<-edges[i]
+}
+## fit centre pieces
+for(p in 2:11){
+  for(q in 2:11){
+    i<-1
+    while(i<=length(middles)){
+      tempTile<-isDoubleMatch(middles[i],1,c(1:10),tiles[[puzzle[p-1,q]]][10,],1:10,1,tiles[[puzzle[p,q-1]]][,10]) 
+      if(is.matrix(tempTile)
+         & sum(puzzle==middles[i])==0){
+        tiles[[middles[i]]]<-tempTile
+        break
+      }
+      i<-i+1
+    }
+    tiles[[middles[i]]]<-tempTile
+    puzzle[p,q]<-middles[i]
+  }
+}
+
+## Create Final Image
+finalImage<-matrix(".",96,96)
+for (i in 1:12){
+  for (j in 1:12){
+    finalImage[(i*8-7):(i*8),(j*8-7):(j*8)]<-tiles[[puzzle[i,j]]][2:9,2:9]
+  }
+}
+
+# count Sea Monsters
+#   .#...#.###...#.##.O#
+#   O.##.OO#.#.OO.##.OOO
+#   #O.#O#.O##O..O.#O##.
+
+#returns TRUE if there is a sea monster in this 3x20 layout
+seaMonster<-function(layout){
+  if(layout[2,1]=="#" &
+     layout[3,2]=="#" &
+     layout[3,5]=="#" &
+     layout[2,6]=="#" &
+     layout[2,7]=="#" &
+     layout[3,8]=="#" &
+     layout[3,11]=="#" &
+     layout[2,12]=="#" &
+     layout[2,13]=="#" &
+     layout[3,14]=="#" &
+     layout[3,17]=="#" &
+     layout[2,18]=="#" &
+     layout[2,19]=="#" &
+     layout[2,20]=="#" &
+     layout[1,19]=="#"){
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+## counts Sea Monsters in image
+countSeaMonsters<-function(finalImage){
+  count<-0
+  for(i in 1:94){
+    for(j in 1:77){
+      if (seaMonster(finalImage[i:(i+2),j:(j+19)])){
+        count<-count+1
+      }
+    }
+  }
+  return(count)
+}
+## find orientation of image that contains sea monsters
+noSeaMonstersInImage<-function(finalImage){
+  monsters<-countSeaMonsters(finalImage)
+  if (monsters>0){
+    return(monsters)
+  }
+  finalImage<-rotateTile(finalImage)
+  monsters<-countSeaMonsters(finalImage)
+  if (monsters>0){
+    return(monsters)
+  }
+  finalImage<-rotateTile(finalImage)
+  monsters<-countSeaMonsters(finalImage)
+  if (monsters>0){
+    return(monsters)
+  }
+  finalImage<-rotateTile(finalImage)
+  if (countSeaMonsters(finalImage)>0){
+    break
+  }
+  finalImage<-flipTileHoriz(finalImage)
+  monsters<-countSeaMonsters(finalImage)
+  if (monsters>0){
+    return(monsters)
+  }
+  finalImage<-rotateTile(finalImage)
+  monsters<-countSeaMonsters(finalImage)
+  if (monsters>0){
+    return(monsters)
+  }
+  finalImage<-rotateTile(finalImage)
+  monsters<-countSeaMonsters(finalImage)
+  if (monsters>0){
+    return(monsters)
+  }
+  finalImage<-rotateTile(finalImage)
+  monsters<-countSeaMonsters(finalImage)
+  if (monsters>0){
+    return(monsters)
+  }
+}
+
+answer2<-sum(finalImage=="#")-noSeaMonstersInImage(finalImage)*15
