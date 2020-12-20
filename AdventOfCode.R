@@ -1561,30 +1561,162 @@ answer2<-sum(answers)
 
 ### Day 19 INCOMPLETE
 
-## read in the data
-rules<-read.table("day19.txt",col.names=c("number","rule"),sep=":",nrows=135)
+# is this a regular expression?
+checkIfRegExpr<-function(rule){
+  if(length(rule)>1){
+    return(FALSE)
+  }
+  if(substring(rule,1,1)=="["|substring(rule,1,1)=="("){
+    return(TRUE)
+  }
+  return(FALSE)
+}
+# Can this be converted to regular expression?
+canConvertToRegExpr<-function(rule){
+  for(i in 1:length(rule)){
+    if (!(substring(rule[i],1,1)=="["|substring(rule[i],1,1)=="("|substring(rule[i],1,1)=="|")){
+      return(FALSE)
+    }
+  }
+  return(TRUE)
+}
+
+## read in data
 messages<-read.table("day19.txt",col.names=c("messages"),skip=136)
-
+rules<-read.table("day19.txt",col.names=c("number","rule"),sep=":",nrows=135)
+# sort order of rules
 rules<-rules[order(rules$number),]
-rule0<-rules[1,2]
-rule0<-unlist(strsplit(rule0," "))
-rule0<-rule0[-1]
-rules<-rules[-1,]
 
+# split rules into vectors
 rules_split<-sapply(rules$rule,function(x)unlist(strsplit(x," ")),USE.NAMES = FALSE)
 rules_split<-lapply(rules_split,function(x)x[-1])
+rules_split<-lapply(rules_split,function(y)unlist(sapply(y,function(x)if(!is.na(as.numeric(x))){as.character(as.numeric(x)+1)}else{x})))
 
-
-rules_split[[6]]
-rule1<-grep('[ab]',rules$rule)
-
-message<-unlist(strsplit(messages$messages[1],""))
-
-checkMessage<-function(message){
-  for (i in 1:length(rule0)){
-    rule0[i]
+## convert initial a and b to regexpr
+for (r in 1:length(rules_split)){
+  if(rules_split[[r]][1]=="a"){
+    rules_split[[r]][1]<-"[a]{1}"
+  } else if(rules_split[[r]][1]=="b"){
+    rules_split[[r]][1]<-"[b]{1}"
   }
 }
+## loop until rule[[1]] is regexpr
+while(checkIfRegExpr(rules_split[[1]])==FALSE){
+  ## check to see if rule below is reg expr
+  for (r in 1:length(rules_split)){
+    if (checkIfRegExpr(rules_split[[r]])==FALSE){
+      for(x in 1:length(rules_split[[r]])){
+        if (rules_split[[r]][x]!="|" & checkIfRegExpr(rules_split[[r]][x])==FALSE){
+          if (checkIfRegExpr(unlist(rules_split[as.numeric(rules_split[[r]][x])]))){
+             ## if so, copy up
+            rules_split[[r]][x]<-unlist(rules_split[as.numeric(rules_split[[r]][x])])
+          }
+        }
+      }
+    }
+  }
+  ## check to see if can convert to regexpr
+  for (r in 1:length(rules_split)){
+    if(canConvertToRegExpr(rules_split[[r]])){
+      ## if yes, do it
+      rules_split[[r]]<-paste(c("(",rules_split[[r]],")"),collapse="")
+    }
+  }
+}
+finalRule<-rules_split[[1]]
+
+## check each message against the rule
+validMessages<-rep(FALSE,nrow(messages))
+for(m in 1:nrow(messages)){
+  result<-regexpr(finalRule,messages$messages[m])
+  if (result==1){
+    if (attr(result,"match.length")==nchar(messages$messages[m])){
+      validMessages[m]<-TRUE
+    }
+  }
+}
+answer1<-sum(validMessages)
+
+## Part 2
+
+# can convert to reg expression, with infinite option?
+canConvertInfiniteRegExpr<-function(rule,index){
+  for(i in 1:length(rule)){
+    if (!(substring(rule[i],1,1)=="["|substring(rule[i],1,1)=="("|substring(rule[i],1,1)=="|"|substring(rule[i],1,nchar(index))==index)){
+      return(FALSE)
+    }
+  }
+  return(TRUE)
+}
+
+## update rules
+updated_rules<-rules
+updated_rules$rule[9]<-" 42 | 42 8"
+updated_rules$rule[12]<-" 42 31 | 42 11 31"
+
+# split rules into vectors
+rules_split<-sapply(updated_rules$rule,function(x)unlist(strsplit(x," ")),USE.NAMES = FALSE)
+rules_split<-lapply(rules_split,function(x)x[-1])
+rules_split<-lapply(rules_split,function(y)unlist(sapply(y,function(x)if(!is.na(as.numeric(x))){as.character(as.numeric(x)+1)}else{x})))
+
+## convert initial a and b to regexpr
+for (r in 1:length(rules_split)){
+  if(rules_split[[r]][1]=="a"){
+    rules_split[[r]][1]<-"[a]{1}"
+  } else if(rules_split[[r]][1]=="b"){
+    rules_split[[r]][1]<-"[b]{1}"
+  }
+}
+## loop until rule[[1]] is regexpr
+while(checkIfRegExpr(rules_split[[1]])==FALSE){
+  ## check to see if rule below is reg expr
+  for (r in 1:length(rules_split)){
+    if (checkIfRegExpr(rules_split[[r]])==FALSE){
+      for(x in 1:length(rules_split[[r]])){
+        if (rules_split[[r]][x]!=r & rules_split[[r]][x]!="|" & checkIfRegExpr(rules_split[[r]][x])==FALSE){
+          if (checkIfRegExpr(unlist(rules_split[as.numeric(rules_split[[r]][x])]))){
+            ## if so, copy up
+            rules_split[[r]][x]<-unlist(rules_split[as.numeric(rules_split[[r]][x])])
+          }
+        }
+      }
+    }
+  }
+  ## check to see if can convert to regexpr
+  for (r in 1:length(rules_split)){
+    if(canConvertToRegExpr(rules_split[[r]])){
+      ## if yes, do it
+      rules_split[[r]]<-paste(c("(",rules_split[[r]],")"),collapse="")
+    } else if(canConvertInfiniteRegExpr(rules_split[[r]],r)){
+      ## if yes, do it
+      # HORRIBLE CODE
+      if(r==9){
+        rules_split[[r]][4]<-paste0("(",rules_split[[r]][1],"){1,}")
+      } else if(r==12){
+        rules_split[[r]][5]<-paste0("(((",rules_split[[r]][1],"){1}(",rules_split[[r]][2],"){1})|",
+                                    "((",rules_split[[r]][1],"){2}(",rules_split[[r]][2],"){2})|",
+                                    "((",rules_split[[r]][1],"){3}(",rules_split[[r]][2],"){3})|",
+                                    "((",rules_split[[r]][1],"){4}(",rules_split[[r]][2],"){4})|",
+                                    "((",rules_split[[r]][1],"){5}(",rules_split[[r]][2],"){5}))")
+      }
+      rules_split[[r]]<-paste(c("(",rules_split[[r]],")"),collapse="")
+    }
+  }
+}
+finalRule<-rules_split[[1]]
+
+## check each message against the rule
+validMessages<-rep(FALSE,nrow(messages))
+for(m in 1:nrow(messages)){
+  print.default(m)
+  result<-regexpr(finalRule,messages$messages[m])
+  if (result==1){
+    if (attr(result,"match.length")==nchar(messages$messages[m])){
+      validMessages[m]<-TRUE
+    }
+  }
+}
+answer2<-sum(validMessages)
 
 ###################################################################
 
