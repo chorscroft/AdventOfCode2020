@@ -2242,3 +2242,105 @@ noSeaMonstersInImage<-function(finalImage){
 }
 
 answer2<-sum(finalImage=="#")-noSeaMonstersInImage(finalImage)*15
+
+###################################################################
+
+### Day 21
+
+## read foods into a list of lists
+day21<-file("day21.txt","r")
+foods<-list()
+countFood<-0
+while (TRUE){
+  line = readLines(day21, n = 1)
+  if (length(line) == 0){
+    break
+  } else {
+    ingredients<-unlist(strsplit(line," "))
+    allergens<-ingredients[(which(ingredients=="(contains")+1):length(ingredients)]
+    allergens<-unname(sapply(allergens,function(x)substring(x,1,nchar(x)-1)))
+    ingredients<-ingredients[1:(which(ingredients=="(contains")-1)]
+    countFood<-countFood+1
+    foods[[countFood]]<-list(ingredients=ingredients,allergens=allergens)
+  }
+}
+close(day21)
+
+## get table of ingredients
+allIngredients<-NULL
+allAllergens<-NULL
+for (i in 1:length(foods)){
+  allIngredients<-c(allIngredients,foods[[i]]$ingredients)
+  allAllergens<-c(allAllergens,foods[[i]]$allergens)
+}
+
+tableIngredients<-table(allIngredients)
+## get unique ingredients
+uniqIngredients<-names(tableIngredients)
+## get unique allergens
+tableAllergens<-table(allAllergens)
+uniqAllergens<-names(tableAllergens)
+
+## create matrix of ingredients vs allergens
+ingredAllerg<-matrix(0,nrow=length(uniqIngredients),ncol=length(uniqAllergens))
+
+## count if an ingredient potentially contains an allergen
+## count if it exists every time the allergen is listed
+## if this number is not equal to the tableAllergens, then it cannot contain it
+
+for (f in 1:length(foods)){
+  for(i in 1:length(foods[[f]]$ingredients)){
+    for (a in 1:length(foods[[f]]$allergens)){
+      ingredIndex<-which(uniqIngredients==foods[[f]]$ingredients[i])
+      allergenIndex<-which(uniqAllergens==foods[[f]]$allergens[a])
+      ingredAllerg[ingredIndex,allergenIndex]<-ingredAllerg[ingredIndex,allergenIndex]+1   
+    }
+  }
+}
+
+ingCannotContainAny<-rep(TRUE,length(uniqIngredients))
+for (i in 1:length(uniqIngredients)){
+  for (a in 1:length(uniqAllergens)){
+    if (ingredAllerg[i,a]==tableAllergens[a]){
+      ingCannotContainAny[i]<-FALSE
+      break
+    }
+  }
+}
+answer1<-sum(ingCannotContainAny*tableIngredients)
+
+## Part 2
+
+ingContainIndex<-which(ingCannotContainAny==FALSE)
+
+## get matrix of ingredients vs allergens for just those ingredients that
+## definitely contain an allergen
+finalIngAller<-matrix(FALSE,length(uniqAllergens),length(uniqAllergens))
+for (i in 1:length(uniqAllergens)){
+  for (a in 1:length(uniqAllergens)){
+    if(ingredAllerg[ingContainIndex[i],a]==tableAllergens[a]){
+      finalIngAller[i,a]<-TRUE
+    }
+  }
+}
+
+## Get unique results. Map the allergens to the ingredients one-to-one
+while(sum(finalIngAller)>length(uniqAllergens)){
+  for (i in 1:length(uniqAllergens)){
+    if(sum(finalIngAller[i,])==1){
+      index<-which(finalIngAller[i,]==TRUE)
+      for (x in 1:length(uniqAllergens)){
+        if (x!=i){
+          finalIngAller[x,index]<-FALSE
+        }
+      }
+    }
+  }
+}
+## get the names of the ingredients
+dangerousIngredients<-rep("",length(uniqAllergens))
+for(a in 1:length(uniqAllergens)){
+  dangerousIngredients[a]<-uniqIngredients[ingContainIndex[which(finalIngAller[,a]==TRUE)]]
+}
+
+answer2<-paste(dangerousIngredients,collapse = ",")
