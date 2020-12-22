@@ -2344,3 +2344,126 @@ for(a in 1:length(uniqAllergens)){
 }
 
 answer2<-paste(dangerousIngredients,collapse = ",")
+
+###################################################################
+
+### Day 22
+
+player1<-read.table("day22.txt",col.names=c("cards"),skip=1,nrows=25)
+player2<-read.table("day22.txt",col.names=c("cards"),skip=28,nrows=25)
+
+player1<-player1$cards
+player2<-player2$cards
+
+while (length(player1)>0 & length(player2)>0){
+  if (player1[1]>player2[1]){
+    player1<-c(player1,player1[1],player2[1])
+    player1<-player1[-1]
+    player2<-player2[-1]
+  } else {
+    player2<-c(player2,player2[1],player1[1])
+    player1<-player1[-1]
+    player2<-player2[-1]
+  }
+}
+
+answer1<-sum(c(50:1)*player1)
+
+## Part 2
+player1<-read.table("day22.txt",col.names=c("cards"),skip=1,nrows=25)
+player2<-read.table("day22.txt",col.names=c("cards"),skip=28,nrows=25)
+
+player1<-player1$cards
+player2<-player2$cards
+
+## checks the record to see if this round has happened before 
+checkRoundIsUnique<-function(recordRounds,player1){
+  for (i in 1:length(recordRounds)){
+    rrPlayer1<-recordRounds[[i]]
+    if (length(rrPlayer1)==length(player1)){
+      if (sum(rrPlayer1==player1)==length(player1)){
+        return(FALSE) 
+      }
+    }
+  }
+  return(TRUE)
+}
+
+## function for recursive combat
+## returns the winner
+recursiveCombat<-function(player1,player2){
+  recordRounds<-list()
+  while(length(player1)>0 & length(player2)>0){
+    recordRounds[[length(recordRounds)+1]]<-player1
+    winner<-0
+    if (player1[1]<=length(player1)-1 & player2[1]<=length(player2)-1){
+      winner<-recursiveCombat(player1[2:(1+player1[1])],player2[2:(1+player2[1])])
+    } 
+    if ((winner==0 & player1[1]>player2[1]) | winner==1){
+      player1<-c(player1,player1[1],player2[1])
+      player1<-player1[-1]
+      player2<-player2[-1]
+    } else {
+      player2<-c(player2,player2[1],player1[1])
+      player1<-player1[-1]
+      player2<-player2[-1]
+    }
+    if(checkRoundIsUnique(recordRounds,player1)==FALSE){
+      winner<-1
+      break
+    }
+  }
+  if (length(player1)==0){
+    return(2)
+  } else if (length(player2)==0){
+    return(1)
+  } else {
+    return(winner)
+  }
+}
+
+## initialises the round record as a list
+recordRounds<-list()
+while (length(player1)>0 & length(player2)>0){
+  ## record current round state for player 1
+  recordRounds[[length(recordRounds)+1]]<-player1
+  
+  ## if there can be a recursion, do it
+  winner<-0
+  if (player1[1]<=length(player1)-1 & player2[1]<=length(player2)-1){
+    winner<-recursiveCombat(player1[2:(1+player1[1])],player2[2:(1+player2[1])])
+  }
+  
+  ## if there wasn't a recursion, pick the highest card
+  ## otherwise, use the winner from recursion
+  if ((winner==0 & player1[1]>player2[1]) | winner==1){
+    player1<-c(player1,player1[1],player2[1])
+    player1<-player1[-1]
+    player2<-player2[-1]
+  } else {
+    player2<-c(player2,player2[1],player1[1])
+    player1<-player1[-1]
+    player2<-player2[-1]
+  }
+  
+  ## check that the round is different from any previous rounds
+  if(checkRoundIsUnique(recordRounds,player1)==FALSE){
+    winner<-1
+    break
+  }
+}
+
+## find ultimate winner
+if (length(player1)==0){
+  winner<-2
+} else if (length(player2)==0){
+  winner<-1
+}
+
+## get answer
+if(winner==1){
+  answer2<-sum(c(length(player1):1)*player1)
+} else {
+  answer2<-sum(c(length(player2):1)*player2)
+}
+
