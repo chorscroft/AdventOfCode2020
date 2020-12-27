@@ -2467,3 +2467,419 @@ if(winner==1){
   answer2<-sum(c(length(player2):1)*player2)
 }
 
+###################################################################
+
+### Day 23
+day23<-"156794823"
+cups<-unlist(strsplit(day23,""))
+
+## Gets the index of the destination cup
+getDestCupInd<-function(cups){
+ testCup<-as.numeric(cups[1])-1
+ while(TRUE){
+    if (testCup==0){
+      testCup<-9
+    }
+    if (sum(cups==testCup)>0){
+      return(which(cups==testCup))
+    }
+   testCup<-testCup-1
+  }
+}
+
+for (i in 1:100){
+  currentCup<-cups[1]
+  movingCups<-cups[c(2,3,4)]
+  cups<-cups[-c(2,3,4)]
+  destinationCupIndex<-getDestCupInd(cups)
+  cups<-c(cups[1:destinationCupIndex],movingCups,cups[(destinationCupIndex+1):6])
+  # put current cup on the end so the first cup is the next clockwise
+  cups<-c(cups[2:9],cups[1])
+}
+answer1<-paste(c(cups[(match(1,cups)+1):length(cups)],cups[1:(match(1,cups)-1)]),collapse="")
+
+## Part 2
+## THIS CODE IS RUBBISH AND TAKES HOURS ##
+
+day23<-"156794823"
+loops<- 10000000
+maxno<- 1000000
+cups<-c(sapply(unlist(strsplit(day23,"")),as.numeric),10:maxno)
+cups<-unname(cups)
+cups<-as.vector(cups,"integer")
+
+## split cups into groups
+groups<-1000
+groupSize<-maxno/groups
+
+## put cup groups in list
+cupsl<-list()
+for(i in 1:groups){
+  cupsl[[i]]<-cups[((i-1)*maxno/groups+1):(i*maxno/groups)]
+}
+rm(cups)
+
+## gets the destination cup index
+getDestCupInd<-function(){
+  testCup<-currentCup-1L
+  while(TRUE){
+    if (testCup==0){
+      testCup<-maxno
+    }
+    if (is.na(match(testCup,movingCups))){
+      x<-ceiling(currCupInd/groupSize)
+      for(i in 1:groups){
+        destCup<-match(testCup,cupsl[[x]])+groupSize*(x-1)
+        if (!is.na(destCup)){
+          break
+        }
+        x<-x-1
+        if(x==0){
+          x<-groups
+        }
+      }
+      return(destCup)
+    }
+    testCup<-testCup-1L
+  }
+}
+## get the indices of the moving cups
+getMovingCupInd<-function(){
+  movingCupInd<-c(currCupInd+1L,currCupInd+2L,currCupInd+3L)
+  if (movingCupInd[[3]]>maxno){
+    movingCupInd[movingCupInd>maxno]<-movingCupInd[movingCupInd>maxno]-maxno
+  }
+  return(movingCupInd)
+}
+
+## start loop with first cup
+currCupInd<-1L
+for (i in 1:loops){
+  
+  ## get current cup label
+  currentCup<-cupsl[[ceiling(currCupInd/groupSize)]][currCupInd-groupSize*(ceiling(currCupInd/groupSize)-1)]
+  
+  ## get moving cup indices
+  movingCupInds<-getMovingCupInd()
+  
+  ## get moving cup labels
+  movingCups<-c(0L,0L,0L)
+  if (ceiling(movingCupInds[[1]]/groupSize)==ceiling(movingCupInds[[3]]/groupSize)){
+    movingCups<-cupsl[[ceiling(movingCupInds[[1]]/groupSize)]][movingCupInds-groupSize*(ceiling(movingCupInds[[1]]/groupSize)-1)]
+  } else {
+    for(c in 1:3){
+      movingCups[[c]]<-cupsl[[ceiling(movingCupInds[[c]]/groupSize)]][movingCupInds[[c]]-groupSize*(ceiling(movingCupInds[[c]]/groupSize)-1)]
+    }    
+  }
+  
+  ## get destination cup index
+  destinationCupInd<-getDestCupInd()
+  
+  ## get group numbers of relevant cups
+  d<-ceiling(destinationCupInd/groupSize)
+  x3<-ceiling(movingCupInds[3]/groupSize)
+  x1<-ceiling(movingCupInds[1]/groupSize)
+  
+  ## insert moving cups after destination cup
+  cupsl[[d]]<-append(cupsl[[d]],movingCups,destinationCupInd-groupSize*(d-1))
+  
+  ## remove cups that moved
+  if (x1==x3){
+    g<-x1
+    if(destinationCupInd<movingCupInds[[1]] && g==d){
+      movingCupInds<-movingCupInds+3
+    }
+    cupsl[[g]]<-cupsl[[g]][-c(movingCupInds-groupSize*(g-1))]
+  } else {
+    for (c in 3:1){
+      g<-ceiling(movingCupInds[[c]]/groupSize)
+      if(destinationCupInd<movingCupInds[[c]] && g==d){
+        movingCupInds[[c]]<-movingCupInds[[c]]+3
+      }
+      cupsl[[g]]<-cupsl[[g]][-c(movingCupInds[[c]]-groupSize*(g-1))]
+    }
+  }
+  
+  ## even out groups sizes
+  if (!(d==x3 && d==x1)){
+    if (x3==d){
+      x<-x1
+    } else {
+      x<-x3
+    }
+    for (y in 1:groups){
+      diff<-groupSize-length(cupsl[[x]])
+      if (diff>0){
+        prevx<-x-1
+        if (prevx==0){
+          prevx<-groups
+        }
+        tempL<-length(cupsl[[prevx]])
+        cupsl[[x]]<-c(cupsl[[prevx]][(tempL-diff+1):tempL],cupsl[[x]])
+        cupsl[[prevx]]<-cupsl[[prevx]][-c((tempL-diff+1):tempL)]
+      }
+      if(x==d && !(x3==d && x1!=d)){
+        break
+      }
+      x<-prevx
+    }
+  }
+  
+  ## find the index of the current cup
+  x<-ceiling(currCupInd/groupSize)
+  for(y in 1:groups){
+    currCupInd<-match(currentCup,cupsl[[x]])+groupSize*(x-1)
+    if (!is.na(currCupInd)){
+      break
+    }
+    x<-x+1
+    if (x>groups){
+      x<-1
+    }
+  }
+  
+  ## get new current cup index
+  currCupInd<-currCupInd+1L
+  if (currCupInd>maxno){
+    currCupInd<-1L
+  }
+  
+}
+
+# find number 1
+cups<-unlist(cupsl)
+loc1<-match(1,cups)
+
+if (loc1<999999){
+  answer2<-as.numeric(cups[loc1+1])*as.numeric(cups[loc1+2])
+} else if(loc1==999999){
+  answer2<-as.numeric(cups[1000000])*as.numeric(cups[1])
+} else if (loc1==1000000){
+  answer2<-as.numeric(cups[1])*as.numeric(cups[2])
+}
+
+###################################################################
+
+### Day 24
+
+day24<-read.table("day24.txt",col.names=c("instructions"))
+#ne nw se sw e w
+
+## grid looks like
+
+# 1 2 3 4 5 6 7 8     odd line WRT starting tile
+#  1 2 3 4 5 6 7 8    even line
+# 1 2 3 4 5 6 7 8     odd line
+blacktiles<-list()
+for (i in 1:nrow(day24)){
+  inst<-day24$instructions[i]
+  relToCentre<-c(0,0) #n,e
+  st<-1
+  while (st<=nchar(inst)){
+    if (substr(inst,st,st)=="e"){
+      relToCentre[2]<-relToCentre[2]+1
+    } else if (substr(inst,st,st)=="w"){
+      relToCentre[2]<-relToCentre[2]-1
+    } else if (substr(inst,st,st+1)=="nw"){
+      relToCentre[1]<-relToCentre[1]+1
+      if(relToCentre[1]%%2==0){
+        relToCentre[2]<-relToCentre[2]-1
+      }
+      st<-st+1
+    } else if (substr(inst,st,st+1)=="sw"){
+      relToCentre[1]<-relToCentre[1]-1
+      if(relToCentre[1]%%2==0){
+        relToCentre[2]<-relToCentre[2]-1
+      }
+      st<-st+1
+    } else if (substr(inst,st,st+1)=="ne"){
+      relToCentre[1]<-relToCentre[1]+1
+      if(relToCentre[1]%%2==1){
+        relToCentre[2]<-relToCentre[2]+1
+      }
+      st<-st+1
+    } else if (substr(inst,st,st+1)=="se"){
+      relToCentre[1]<-relToCentre[1]-1
+      if(relToCentre[1]%%2==1){
+        relToCentre[2]<-relToCentre[2]+1
+      }
+      st<-st+1
+    }
+    st<-st+1
+  }
+  
+  flipped<-FALSE
+  if (length(blacktiles)>0){
+    for (b in 1:length(blacktiles)){
+      if (isTRUE(all.equal(relToCentre,blacktiles[[b]]))){
+        blacktiles<-blacktiles[-b]
+        flipped<-TRUE
+        break
+      }
+    }
+  }
+  if (flipped==FALSE){
+    blacktiles[[length(blacktiles)+1]]<-relToCentre
+  }
+}
+
+answer1<-length(blacktiles)
+
+## Part 2
+
+# 1 2 3 4 5 6 7 8     odd line WRT starting tile
+#  1 2 3 4 5 6 7 8    even line
+# 1 2 3 4 5 6 7 8     odd line
+
+# returns TRUE if the tiles is black
+isBlack<-function(x,y){
+  for (b in 1:length(blacktiles)){
+    if (x==blacktiles[[b]][1] && y==blacktiles[[b]][2]){
+      return(TRUE)
+    }
+  }
+  return(FALSE)
+}
+## returns the number of adjacent black tiles
+countNoBlack<-function(currTile,evenRow){
+  countBlack<-0
+  #ne
+  if (isBlack(currTile[1]+1,currTile[2]+ifelse(evenRow,1,0))){
+    countBlack<-countBlack+1
+  }
+  #e
+  if (isBlack(currTile[1],currTile[2]+1)){
+    countBlack<-countBlack+1
+  }
+  #se
+  if (isBlack(currTile[1]-1,currTile[2]+ifelse(evenRow,1,0))){
+    countBlack<-countBlack+1
+  }
+  #sw
+  if (isBlack(currTile[1]-1,currTile[2]-ifelse(evenRow,0,1))){
+    countBlack<-countBlack+1
+  }
+  #w
+  if (isBlack(currTile[1],currTile[2]-1)){
+    countBlack<-countBlack+1
+  }
+  #nw
+  if (isBlack(currTile[1]+1,currTile[2]-ifelse(evenRow,0,1))){
+    countBlack<-countBlack+1
+  }
+  return(countBlack)
+}
+#checks that the tile is white and hasn't already been identified as flipping
+isNotBlackOrIden<-function(tile){
+  if (isBlack(tile[1],tile[2])){
+    return(FALSE)
+  }
+  if (length(newblacktiles)>0){
+    for (b in 1:length(newblacktiles)){
+      if (tile[1]==newblacktiles[[b]][1] && tile[2]==newblacktiles[[b]][2]){
+        return(FALSE)
+      }
+    }
+  }
+  return(TRUE)
+}
+
+for(day in 1:100){
+  print.default(day)
+  newblacktiles<-list()
+  
+  removeVec<-NULL
+  for (b in 1:length(blacktiles)){
+
+    currTile<-blacktiles[[b]]
+    evenRow<-(currTile[1]%%2==0)
+    countBlack<-countNoBlack(currTile,evenRow)
+    if (countBlack==0 || countBlack>2){
+      removeVec<-c(removeVec,b)
+    }
+    
+    ## check each direction for whites with only one other black
+    #ne
+    neTile<-c(currTile[1]+1,currTile[2]+ifelse(evenRow,1,0))
+    if (isNotBlackOrIden(neTile)){
+      countBlack<-countNoBlack(neTile,(neTile[1]%%2==0))
+      if (countBlack==2){
+        newblacktiles[[length(newblacktiles)+1]]<-neTile
+      }
+    }
+    #e
+    eTile<-c(currTile[1],currTile[2]+1)
+    if (isNotBlackOrIden(eTile)){
+      countBlack<-countNoBlack(eTile,(eTile[1]%%2==0))
+      if (countBlack==2){
+        newblacktiles[[length(newblacktiles)+1]]<-eTile
+      }
+    }
+    #se
+    seTile<-c(currTile[1]-1,currTile[2]+ifelse(evenRow,1,0))
+    if (isNotBlackOrIden(seTile)){
+      countBlack<-countNoBlack(seTile,(seTile[1]%%2==0))
+      if (countBlack==2){
+        newblacktiles[[length(newblacktiles)+1]]<-seTile
+      }
+    }
+    #sw
+    swTile<-c(currTile[1]-1,currTile[2]-ifelse(evenRow,0,1))
+    if (isNotBlackOrIden(swTile)){
+      countBlack<-countNoBlack(swTile,(swTile[1]%%2==0))
+      if (countBlack==2){
+        newblacktiles[[length(newblacktiles)+1]]<-swTile
+      }
+    }
+    #w
+    wTile<-c(currTile[1],currTile[2]-1)
+    if (isNotBlackOrIden(wTile)){
+      countBlack<-countNoBlack(wTile,(wTile[1]%%2==0))
+      if (countBlack==2){
+        newblacktiles[[length(newblacktiles)+1]]<-wTile
+      }
+    }
+    #nw
+    nwTile<-c(currTile[1]+1,currTile[2]-ifelse(evenRow,0,1))
+    if (isNotBlackOrIden(nwTile)){
+      countBlack<-countNoBlack(nwTile,(nwTile[1]%%2==0))
+      if (countBlack==2){
+        newblacktiles[[length(newblacktiles)+1]]<-nwTile
+      }
+    }
+  }
+  if (length(removeVec)>0){
+    blacktiles<-blacktiles[-removeVec]
+  }
+  if (length(newblacktiles)>0){
+    blacktiles<-c(blacktiles,newblacktiles)
+  }
+}
+answer2<-length(blacktiles)
+
+#######################################################################
+
+### Day 25
+
+cardPubKey<-335121
+doorPubKey<-363891
+
+subjectNo<-7
+
+##Set the value to itself multiplied by the subject number.
+##Set the value to the remainder after dividing the value by 20201227.
+
+value<-1
+cardLoops<-0
+while(value!=cardPubKey){
+  value<-value*subjectNo
+  value<-value%%20201227
+  cardLoops<-cardLoops+1
+}
+
+value<-1
+for(i in 1:cardLoops){
+  value<-value*doorPubKey
+  value<-value%%20201227
+}
+value
